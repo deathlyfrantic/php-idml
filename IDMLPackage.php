@@ -1,13 +1,10 @@
 <?php
-namespace IDMLPackage; 
+namespace IDMLPackage;
 /**
  * An object that handles all of the individual files in an IDML package.
  * This is a very simple class that was developed as part of a much larger
  * project. It basically only serves as a file manager/server for the component
  * XML files of an IDML package.
- *
- * As far as I am aware the only dependencies are PHP's XML module and
- * the zip/unzip utilities. (Generally just install zip with your package manager.)
  *
  * Any methods that aren't specifically getters should return $this to facilitate
  * method chaining.
@@ -29,7 +26,31 @@ class IDMLPackage
     protected $zip;
 
     /**
-     * This is an array used to map package elements to their respective load methods. 
+     * Return the full complete paths of the entire contents of a directory including all subdirectories.
+     * @param string $path The path of the directory whose contents you want.
+     * @return array An array of the full paths of those contents.
+     */
+    // this is included here to make this class standalone but ideally you'd factor it out
+    // see my gist of recursive utils @ https://gist.github.com/zandrmartin/086bba7b2a25ec8e57cc
+    public function getDirectoryContents($path)
+    {
+        $results = [];
+        try {
+            $iterator = new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS);
+            foreach($iterator as $i) {
+                $results[] = $i;
+                if($i->isDir()) {
+                    $results = array_merge($results, $this->getDirectoryContents($i));
+                }
+            }
+        } catch(\UnexpectedValueException $e) {
+            // $results is already an empty array so nothing to do here, we'll just return it as is.
+        }
+        return $results;
+    }
+
+    /**
+     * This is an array used to map package elements to their respective load methods.
      * See $this->load(). I am lazy and hate typing.
      */
     protected $packageElements = [
@@ -59,6 +80,7 @@ class IDMLPackage
         } elseif(is_dir($val)) {
             $this->setDirectory($val)->load();
         }
+        return $this;
     }
 
     /**
@@ -68,7 +90,21 @@ class IDMLPackage
     public function __destruct()
     {
         if($this->isZip() && is_dir($this->getDirectory())) {
-            exec("rm -rf " . $this->getDirectory());
+            $pathObjects = $this->getDirectoryContents($this->getDirectory());
+            $contents = array_map(
+                function ($pathObject) {
+                    return $pathObject->getRealPath();
+                },
+                array_reverse($pathObjects)
+            );
+            foreach($contents as $content) {
+                if(is_dir($content)) {
+                    rmdir($content);
+                } else {
+                    unlink($content);
+                }
+            }
+            rmdir($this->getDirectory());
         }
     }
 
@@ -83,7 +119,7 @@ class IDMLPackage
 
     /**
      * Set the design map of the IDML.
-     * @param DOMDocument $val
+     * @param \DOMDocument $val
      * The DOMDocument object loaded with the designmap.xml file.
      */
     public function setDesignMap(\DOMDocument $val)
@@ -127,8 +163,8 @@ class IDMLPackage
     }
 
 	/**
-	 * Graphic setter. 
-	 * @param \DOMDocument $val The Graphic.xml file's DOMDocument. 
+	 * Graphic setter.
+	 * @param \DOMDocument $val The Graphic.xml file's DOMDocument.
 	 * @return IDMLPackage\IDMLPackage This object for method chaining.
 	 */
     public function setGraphic(\DOMDocument $val)
@@ -146,8 +182,8 @@ class IDMLPackage
     }
 
 	/**
-	 * Fonts setter. 
-	 * @param \DOMDocument $val The Fonts.xml file's DOMDocument. 
+	 * Fonts setter.
+	 * @param \DOMDocument $val The Fonts.xml file's DOMDocument.
 	 * @return IDMLPackage\IDMLPackage This object for method chaining.
 	 */
     public function setFonts(\DOMDocument $val)
@@ -165,8 +201,8 @@ class IDMLPackage
     }
 
 	/**
-	 * Styles setter. 
-	 * @param \DOMDocument $val The Styles.xml file's DOMDocument. 
+	 * Styles setter.
+	 * @param \DOMDocument $val The Styles.xml file's DOMDocument.
 	 * @return IDMLPackage\IDMLPackage This object for method chaining.
 	 */
     public function setStyles(\DOMDocument $val)
@@ -184,8 +220,8 @@ class IDMLPackage
     }
 
 	/**
-	 * Preferences setter. 
-	 * @param \DOMDocument $val The Preferences.xml file's DOMDocument. 
+	 * Preferences setter.
+	 * @param \DOMDocument $val The Preferences.xml file's DOMDocument.
 	 * @return IDMLPackage\IDMLPackage This object for method chaining.
 	 */
     public function setPreferences(\DOMDocument $val)
@@ -248,8 +284,8 @@ class IDMLPackage
     }
 
 	/**
-	 * Backing story setter. 
-	 * @param \DOMDocument $val The BackingStory.xml file's DOMDocument. 
+	 * Backing story setter.
+	 * @param \DOMDocument $val The BackingStory.xml file's DOMDocument.
 	 * @return IDMLPackage\IDMLPackage This object for method chaining.
 	 */
     public function setBackingStory(\DOMDocument $val)
@@ -267,8 +303,8 @@ class IDMLPackage
     }
 
 	/**
-	 * Tags setter. 
-	 * @param \DOMDocument $val The Tags.xml file's DOMDocument. 
+	 * Tags setter.
+	 * @param \DOMDocument $val The Tags.xml file's DOMDocument.
 	 * @return IDMLPackage\IDMLPackage This object for method chaining.
 	 */
     public function setTags(\DOMDocument $val)
@@ -286,8 +322,8 @@ class IDMLPackage
     }
 
 	/**
-	 * Mapping setter. 
-	 * @param \DOMDocument $val The Mapping.xml file's DOMDocument. 
+	 * Mapping setter.
+	 * @param \DOMDocument $val The Mapping.xml file's DOMDocument.
 	 * @return IDMLPackage\IDMLPackage This object for method chaining.
 	 */
     public function setMapping(\DOMDocument $val)
@@ -336,13 +372,15 @@ class IDMLPackage
     public function setZip($val)
     {
         $this->zip = realpath($val);
-        if(empty($this->getDirectory()) && $this->getDirectory() !== 0) { 
+        if(empty($this->getDirectory()) && $this->getDirectory() !== 0) {
             // gotta love empty() and PHP's automatic type-conversion :/
-            $directoryName = dirname($val) . "/." . basename($val);
+            $directoryName = dirname($val) . DIRECTORY_SEPARATOR . "." . basename($val);
             mkdir($directoryName, 0775);
             $this->setDirectory($directoryName);
-            exec("unzip -o -d $directoryName $val"); 
-            // gotta have zip installed on your system, sorry
+            $zip = new \ZipArchive();
+            $zip->open($val);
+            $zip->extractTo($directoryName);
+            $zip->close();
         }
         return $this;
     }
@@ -371,7 +409,7 @@ class IDMLPackage
     /**
      * This is the master load method that will create populate the object with
      * DOMDocuments of the component XML files. You need to set the location of
-     * the IDML before this method is called - either by passing it with the 
+     * the IDML before this method is called - either by passing it with the
      * instantiation (new IDMLPackage\IDMLPackage("idmlfile.idml")) or by calling
      * the setZip() or setDirectory() methods.
      */
@@ -477,7 +515,32 @@ class IDMLPackage
                 $name = basename($this->getDirectory()) . ".idml";
             }
         }
-        shell_exec("zip -r -9 $name *");
+        $zip = new \ZipArchive();
+        $zip->open($name, \ZipArchive::CREATE);
+        $dir = new \SplFileInfo(".");
+        // this chunk is from my ZipFile class that extends PHP's ZipArchive.
+        // https://github.com/zandrmartin/php-zipfile
+        // it is included here to make this class standalone but ideally you'd factor this out
+        if($dir->isDir()) {
+            $contents = $this->getDirectoryContents($path);
+            $baseDir = $dir->getPathInfo()->getRealPath();
+        } else {
+            $contents = [];
+        }
+        if(count($contents) === 0) {
+            $zip->addEmptyDir($dir->getBasename());
+        } else {
+            foreach($contents as $c) {
+                if(is_dir($c)) {
+                    // safe to do because directories will always come before their contents
+                    // in the array returned by getDirectoryContents()
+                    $zip->addEmptyDir($dir->getBasename());
+                } else {
+                    $zip->addFile($c, str_replace($baseDir . DIRECTORY_SEPARATOR, "", $c));
+                }
+            }
+        }
+        $zip->close();
         $this->setZip($name);
         chdir($currentDirectory);
         return $this;
@@ -523,12 +586,17 @@ class IDMLPackage
      * See the notes on the getSpread() method - you'll have to adjust this if your IDML
      * files have more than one spread.
      * @param \DOMNode $val The element to be added to the spread.
+     * @param \DOMDocument $spread The spread you want to which you want to add the element. If not provided, defaults
+     * to whatever getSpread() returns.
      */
-    public function addElementToSpread(\DOMNode $val)
+    public function addElementToSpread(\DOMNode $val, $spread = "")
     {
-        $spreadNodelist = $this->getSpread()->getElementsByTagName("Spread");
+        if($spread instanceof \DOMDocument === false) {
+            $spread = $this->getSpread();
+        }
+        $spreadNodelist = $spread->getElementsByTagName("Spread");
         $spreadElement = $spreadNodelist->item($spreadNodelist->length - 1);
-        $spreadElement->appendChild($this->getSpread()->importNode($val, true));
+        $spreadElement->appendChild($spread->importNode($val, true));
         return $this;
     }
 
@@ -650,7 +718,7 @@ class IDMLPackage
         }
         return $this;
     }
-   
+
 	/**
 	 * A convenience method to get the self attribute of the main element of a component.
 	 * e.g. for a story, this returns u123 from <Story Self="u123">
@@ -660,5 +728,40 @@ class IDMLPackage
         $elementName = str_replace("idPkg:", "", $dom->documentElement->nodeName);
         $element = $dom->documentElement->getElementsByTagName($elementName)->item(0);
         return $element->getAttribute("Self");
+    }
+
+    /**
+     * Get the tag of an element from the XML\BackingStory.xml file.
+     * @param \DOMElement $node The element for which we want the tag.
+     * @return mixed The tag if one is found, or false if one is not found.
+     */
+    public function getMarkupTag(\DOMElement $node)
+    {
+        $tag = false;
+        $selfs = [$node->getAttribute("Self")];
+        $xpath = Build::DOMXPath($this->getBackingStory());
+        if($node->nodeName == "TextFrame") {
+            $selfs[] = $node->getAttribute("ParentStory");
+        }
+        foreach($selfs as $self) {
+            $xmlElement = false;
+            while($node->parentNode) {
+                $node = $node->parentNode;
+                if("XMLElement" == $node->nodeName) {
+                    $xmlElement = $node;
+                    break;
+                }
+            }
+            if($xmlElement == false) {
+                $xmlElements = $xpath->query("//XMLElement[@XMLContent='$self']");
+                if($xmlElements->length > 0) {
+                    $xmlElement = $xmlElements->item(0);
+                }
+            }
+            if($xmlElement && empty($xmlElement->getAttribute("MarkupTag")) == false) {
+                $tag = str_replace("XMLTag/", "", $xmlElement->getAttribute("MarkupTag"));
+            }
+        }
+        return urldecode($tag);
     }
 }
