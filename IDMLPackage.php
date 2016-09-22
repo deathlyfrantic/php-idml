@@ -522,7 +522,7 @@ class IDMLPackage
         // https://github.com/zandrmartin/php-zipfile
         // it is included here to make this class standalone but ideally you'd factor this out
         if($dir->isDir()) {
-            $contents = $this->getDirectoryContents($path);
+            $contents = $this->getDirectoryContents($this->getDirectory());
             $baseDir = $dir->getPathInfo()->getRealPath();
         } else {
             $contents = [];
