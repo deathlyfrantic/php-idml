@@ -58,4 +58,4 @@ Everything else you'll just have to figure out on your own.
 
 #### License
 
-I don't care, do whatever you want. I'm not responsible for anything ever. The end.
+MIT
