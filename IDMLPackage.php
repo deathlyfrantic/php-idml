@@ -1,4 +1,25 @@
 <?php
+// PHP IDML object
+// Copyright © 2016 Zandr Martin
+
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+// TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+// OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 namespace IDMLPackage;
 /**
  * An object that handles all of the individual files in an IDML package.
@@ -143,87 +164,87 @@ class IDMLPackage
         return $this->masterSpreads;
     }
 
-	/**
-	 * Master spreads setter. If you only have one, wrap it in [] before passing.
-	 * @param array $val The array of master spreads.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Master spreads setter. If you only have one, wrap it in [] before passing.
+     * @param array $val The array of master spreads.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setMasterSpreads(array $val)
     {
         $this->designMap = $val;
         return $this;
     }
 
-	/**
-	 * Returns the DOMDocument object of the Graphic.xml file.
-	 */
+    /**
+     * Returns the DOMDocument object of the Graphic.xml file.
+     */
     public function getGraphic()
     {
         return $this->graphic;
     }
 
-	/**
-	 * Graphic setter.
-	 * @param \DOMDocument $val The Graphic.xml file's DOMDocument.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Graphic setter.
+     * @param \DOMDocument $val The Graphic.xml file's DOMDocument.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setGraphic(\DOMDocument $val)
     {
         $this->graphic = $val;
         return $this;
     }
 
-	/**
-	 * Returns the DOMDocument object of the Fonts.xml file.
-	 */
+    /**
+     * Returns the DOMDocument object of the Fonts.xml file.
+     */
     public function getFonts()
     {
         return $this->fonts;
     }
 
-	/**
-	 * Fonts setter.
-	 * @param \DOMDocument $val The Fonts.xml file's DOMDocument.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Fonts setter.
+     * @param \DOMDocument $val The Fonts.xml file's DOMDocument.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setFonts(\DOMDocument $val)
     {
         $this->fonts = $val;
         return $this;
     }
 
-	/**
-	 * Returns the DOMDocument object of the Styles.xml file.
-	 */
+    /**
+     * Returns the DOMDocument object of the Styles.xml file.
+     */
     public function getStyles()
     {
         return $this->styles;
     }
 
-	/**
-	 * Styles setter.
-	 * @param \DOMDocument $val The Styles.xml file's DOMDocument.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Styles setter.
+     * @param \DOMDocument $val The Styles.xml file's DOMDocument.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setStyles(\DOMDocument $val)
     {
         $this->styles = $val;
         return $this;
     }
 
-	/**
-	 * Returns the DOMDocument object of the Preferences.xml file.
-	 */
+    /**
+     * Returns the DOMDocument object of the Preferences.xml file.
+     */
     public function getPreferences()
     {
         return $this->preferences;
     }
 
-	/**
-	 * Preferences setter.
-	 * @param \DOMDocument $val The Preferences.xml file's DOMDocument.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Preferences setter.
+     * @param \DOMDocument $val The Preferences.xml file's DOMDocument.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setPreferences(\DOMDocument $val)
     {
         $this->preferences = $val;
@@ -245,11 +266,11 @@ class IDMLPackage
         return $this->spreads;
     }
 
-	/**
-	 * Spreads setter. If you only have one, wrap it in [] before passing.
-	 * @param array $val The array of spreads.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Spreads setter. If you only have one, wrap it in [] before passing.
+     * @param array $val The array of spreads.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setSpreads(array $val)
     {
         $this->spreads = $val;
@@ -264,77 +285,77 @@ class IDMLPackage
         return $this->stories;
     }
 
-	/**
-	 * Stories setter. If you only have one, wrap it in [] before passing.
-	 * @param array $val The array of stories.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Stories setter. If you only have one, wrap it in [] before passing.
+     * @param array $val The array of stories.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setStories(array $val)
     {
         $this->stories = $val;
         return $this;
     }
 
-	/**
-	 * Returns the DOMDocument object of the BackingStory.xml file.
-	 */
+    /**
+     * Returns the DOMDocument object of the BackingStory.xml file.
+     */
     public function getBackingStory()
     {
         return $this->backingStory;
     }
 
-	/**
-	 * Backing story setter.
-	 * @param \DOMDocument $val The BackingStory.xml file's DOMDocument.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Backing story setter.
+     * @param \DOMDocument $val The BackingStory.xml file's DOMDocument.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setBackingStory(\DOMDocument $val)
     {
         $this->backingStory = $val;
         return $this;
     }
 
-	/**
-	 * Returns the DOMDocument object of the Tags.xml file.
-	 */
+    /**
+     * Returns the DOMDocument object of the Tags.xml file.
+     */
     public function getTags()
     {
         return $this->tags;
     }
 
-	/**
-	 * Tags setter.
-	 * @param \DOMDocument $val The Tags.xml file's DOMDocument.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Tags setter.
+     * @param \DOMDocument $val The Tags.xml file's DOMDocument.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setTags(\DOMDocument $val)
     {
         $this->tags = $val;
         return $this;
     }
 
-	/**
-	 * Returns the DOMDocument object of the Mapping.xml file.
-	 */
+    /**
+     * Returns the DOMDocument object of the Mapping.xml file.
+     */
     public function getMapping()
     {
         return $this->mapping;
     }
 
-	/**
-	 * Mapping setter.
-	 * @param \DOMDocument $val The Mapping.xml file's DOMDocument.
-	 * @return IDMLPackage\IDMLPackage This object for method chaining.
-	 */
+    /**
+     * Mapping setter.
+     * @param \DOMDocument $val The Mapping.xml file's DOMDocument.
+     * @return IDMLPackage\IDMLPackage This object for method chaining.
+     */
     public function setMapping(\DOMDocument $val)
     {
         $this->mapping = $val;
         return $this;
     }
 
-	/**
-	 * Returns a string containing the directory name of this IDML.
-	 */
+    /**
+     * Returns a string containing the directory name of this IDML.
+     */
     public function getDirectory()
     {
         return $this->directory;
@@ -355,9 +376,9 @@ class IDMLPackage
         return $this;
     }
 
-	/**
-	 * Returns a string containing the zip file name of this IDML.
-	 */
+    /**
+     * Returns a string containing the zip file name of this IDML.
+     */
     public function getZip()
     {
         return $this->zip;
@@ -385,8 +406,8 @@ class IDMLPackage
         return $this;
     }
 
-	/**
-	 * Set all array properties to empty arrays.
+    /**
+     * Set all array properties to empty arrays.
      */
     public function unsetArrays()
     {
@@ -396,9 +417,9 @@ class IDMLPackage
         return $this;
     }
 
-	/**
-	 * Special method to load the designmap.xml of this IDML which is required to get all of the other components.
-	 */
+    /**
+     * Special method to load the designmap.xml of this IDML which is required to get all of the other components.
+     */
     public function loadDesignMap()
     {
         $designmap = $this->createDom($this->getDirectory() . "designmap.xml");
@@ -439,36 +460,36 @@ class IDMLPackage
         return $this;
     }
 
-	/**
-	 * Save the designmap.xml file to disk.
-	 */
+    /**
+     * Save the designmap.xml file to disk.
+     */
     public function saveDesignMap()
     {
         $this->getDesignMap()->save($this->getDesignMap()->documentURI);
         return $this;
     }
 
-	/**
-	 * Save the stories files to disk.
-	 */
+    /**
+     * Save the stories files to disk.
+     */
     public function saveStories()
     {
         $this->saveArrayOfDoms($this->getStories());
         return $this;
     }
 
-	/**
-	 * Save the master spreads files to disk.
-	 */
+    /**
+     * Save the master spreads files to disk.
+     */
     public function saveMasterSpreads()
     {
         $this->saveArrayOfDoms($this->getMasterSpreads());
         return $this;
     }
 
-	/**
-	 * Save the spreads files to disk.
-	 */
+    /**
+     * Save the spreads files to disk.
+     */
     public function saveSpreads()
     {
         $this->saveArrayOfDoms($this->getSpreads());
@@ -571,10 +592,10 @@ class IDMLPackage
         return $this;
     }
 
-	/**
-	 * Add a spread to the spreads property of this package.
-	 * Does NOT do anything other than this - no file creation/saving/etc.
-	 */
+    /**
+     * Add a spread to the spreads property of this package.
+     * Does NOT do anything other than this - no file creation/saving/etc.
+     */
     public function addSpread(\DOMDocument $val)
     {
         $this->spreads[$this->getSelfAttributeOfDom($val)] = $val;
@@ -600,10 +621,10 @@ class IDMLPackage
         return $this;
     }
 
-	/**
-	 * Add a master spread to the master spreads property of this package.
-	 * Does NOT do anything other than this - no file creation/saving/etc.
-	 */
+    /**
+     * Add a master spread to the master spreads property of this package.
+     * Does NOT do anything other than this - no file creation/saving/etc.
+     */
     public function addMasterSpread(\DOMDocument $val)
     {
         $this->masterSpreads[$this->getSelfAttributeOfDom($val)] = $val;
@@ -719,10 +740,10 @@ class IDMLPackage
         return $this;
     }
 
-	/**
-	 * A convenience method to get the self attribute of the main element of a component.
-	 * e.g. for a story, this returns u123 from <Story Self="u123">
-	 */
+    /**
+     * A convenience method to get the self attribute of the main element of a component.
+     * e.g. for a story, this returns u123 from <Story Self="u123">
+     */
     protected function getSelfAttributeOfDom(\DOMDocument $dom)
     {
         $elementName = str_replace("idPkg:", "", $dom->documentElement->nodeName);
