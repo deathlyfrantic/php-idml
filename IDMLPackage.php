@@ -1,6 +1,5 @@
 <?php
-// PHP IDML object
-// Copyright © 2016 Zandr Martin
+// Copyright © 2016-2017 Zandr Martin
 
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -30,8 +29,7 @@ namespace IDMLPackage;
  * Any methods that aren't specifically getters should return $this to facilitate
  * method chaining.
  */
-class IDMLPackage
-{
+class IDMLPackage {
     protected $designMap;
     protected $masterSpreads = [];
     protected $graphic;
@@ -53,20 +51,21 @@ class IDMLPackage
      */
     // this is included here to make this class standalone but ideally you'd factor it out
     // see my gist of recursive utils @ https://gist.github.com/zandrmartin/086bba7b2a25ec8e57cc
-    public function getDirectoryContents($path)
-    {
+    public function getDirectoryContents($path) {
         $results = [];
+
         try {
             $iterator = new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS);
-            foreach($iterator as $i) {
+            foreach ($iterator as $i) {
                 $results[] = $i;
-                if($i->isDir()) {
+                if ($i->isDir()) {
                     $results = array_merge($results, $this->getDirectoryContents($i));
                 }
             }
-        } catch(\UnexpectedValueException $e) {
+        } catch (\UnexpectedValueException $e) {
             // $results is already an empty array so nothing to do here, we'll just return it as is.
         }
+
         return $results;
     }
 
@@ -75,16 +74,16 @@ class IDMLPackage
      * See $this->load(). I am lazy and hate typing.
      */
     protected $packageElements = [
-        "Graphic" => "set",
-        "Fonts" => "set",
-        "Styles" => "set",
-        "Preferences" => "set",
-        "Tags" => "set",
+        "Graphic"      => "set",
+        "Fonts"        => "set",
+        "Styles"       => "set",
+        "Preferences"  => "set",
+        "Tags"         => "set",
         "MasterSpread" => "add",
-        "Spread" => "add",
+        "Spread"       => "add",
         "BackingStory" => "set",
-        "Story" => "add",
-        "Mapping" => "set"
+        "Story"        => "add",
+        "Mapping"      => "set"
     ];
 
     /**
@@ -94,13 +93,13 @@ class IDMLPackage
      * The project I developed this for uses IDML packages that live in an unzipped form
      * so they can be easily-modified before zipping up for processing.
      */
-    public function __construct($val = "")
-    {
-        if(mb_strpos($val, ".idml") !== false && file_exists($val)) {
+    public function __construct($val = "") {
+        if (mb_strpos($val, ".idml") !== false && file_exists($val)) {
             $this->setZip($val)->load();
-        } elseif(is_dir($val)) {
+        } else if (is_dir($val)) {
             $this->setDirectory($val)->load();
         }
+
         return $this;
     }
 
@@ -108,9 +107,8 @@ class IDMLPackage
      * Basically if this package was loaded from an IDML file, we're assuming we unzipped it,
      * so delete all the temp directory and files we created by unzipping it.
      */
-    public function __destruct()
-    {
-        if($this->isZip() && is_dir($this->getDirectory())) {
+    public function __destruct() {
+        if ($this->isZip() && is_dir($this->getDirectory())) {
             $pathObjects = $this->getDirectoryContents($this->getDirectory());
             $contents = array_map(
                 function ($pathObject) {
@@ -118,13 +116,15 @@ class IDMLPackage
                 },
                 array_reverse($pathObjects)
             );
-            foreach($contents as $content) {
-                if(is_dir($content)) {
+
+            foreach ($contents as $content) {
+                if (is_dir($content)) {
                     rmdir($content);
                 } else {
                     unlink($content);
                 }
             }
+
             rmdir($this->getDirectory());
         }
     }
@@ -133,8 +133,7 @@ class IDMLPackage
      * Get the design map of the IDML.
      * @return DOMDocument The designmap.xml of the IDML package.
      */
-    public function getDesignMap()
-    {
+    public function getDesignMap() {
         return $this->designMap;
     }
 
@@ -143,8 +142,7 @@ class IDMLPackage
      * @param \DOMDocument $val
      * The DOMDocument object loaded with the designmap.xml file.
      */
-    public function setDesignMap(\DOMDocument $val)
-    {
+    public function setDesignMap(\DOMDocument $val) {
         $this->designMap = $val;
         return $this;
     }
@@ -156,11 +154,11 @@ class IDMLPackage
      * @return [mixed] Without $which parameter, returns an array of all master spreads.
      * With $which parameter, returns a single DOMDocument of the specified master spread.
      */
-    public function getMasterSpreads($which = "")
-    {
-        if(array_key_exists($which, $this->masterSpreads)) {
+    public function getMasterSpreads($which = "") {
+        if (array_key_exists($which, $this->masterSpreads)) {
             return $this->masterSpreads[$which];
         }
+
         return $this->masterSpreads;
     }
 
@@ -169,8 +167,7 @@ class IDMLPackage
      * @param array $val The array of master spreads.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setMasterSpreads(array $val)
-    {
+    public function setMasterSpreads(array $val) {
         $this->designMap = $val;
         return $this;
     }
@@ -178,8 +175,7 @@ class IDMLPackage
     /**
      * Returns the DOMDocument object of the Graphic.xml file.
      */
-    public function getGraphic()
-    {
+    public function getGraphic() {
         return $this->graphic;
     }
 
@@ -188,8 +184,7 @@ class IDMLPackage
      * @param \DOMDocument $val The Graphic.xml file's DOMDocument.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setGraphic(\DOMDocument $val)
-    {
+    public function setGraphic(\DOMDocument $val) {
         $this->graphic = $val;
         return $this;
     }
@@ -197,8 +192,7 @@ class IDMLPackage
     /**
      * Returns the DOMDocument object of the Fonts.xml file.
      */
-    public function getFonts()
-    {
+    public function getFonts() {
         return $this->fonts;
     }
 
@@ -207,8 +201,7 @@ class IDMLPackage
      * @param \DOMDocument $val The Fonts.xml file's DOMDocument.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setFonts(\DOMDocument $val)
-    {
+    public function setFonts(\DOMDocument $val) {
         $this->fonts = $val;
         return $this;
     }
@@ -216,8 +209,7 @@ class IDMLPackage
     /**
      * Returns the DOMDocument object of the Styles.xml file.
      */
-    public function getStyles()
-    {
+    public function getStyles() {
         return $this->styles;
     }
 
@@ -226,8 +218,7 @@ class IDMLPackage
      * @param \DOMDocument $val The Styles.xml file's DOMDocument.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setStyles(\DOMDocument $val)
-    {
+    public function setStyles(\DOMDocument $val) {
         $this->styles = $val;
         return $this;
     }
@@ -235,8 +226,7 @@ class IDMLPackage
     /**
      * Returns the DOMDocument object of the Preferences.xml file.
      */
-    public function getPreferences()
-    {
+    public function getPreferences() {
         return $this->preferences;
     }
 
@@ -245,8 +235,7 @@ class IDMLPackage
      * @param \DOMDocument $val The Preferences.xml file's DOMDocument.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setPreferences(\DOMDocument $val)
-    {
+    public function setPreferences(\DOMDocument $val) {
         $this->preferences = $val;
         return $this;
     }
@@ -258,11 +247,11 @@ class IDMLPackage
      * @return [mixed] Without $which parameter, returns an array of all spreads.
      * With $which parameter, returns a single DOMDocument of the specified spread.
      */
-    public function getSpreads($which = "")
-    {
-        if(array_key_exists($which, $this->spreads)) {
+    public function getSpreads($which = "") {
+        if (array_key_exists($which, $this->spreads)) {
             return $this->spreads[$which];
         }
+
         return $this->spreads;
     }
 
@@ -271,17 +260,16 @@ class IDMLPackage
      * @param array $val The array of spreads.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setSpreads(array $val)
-    {
+    public function setSpreads(array $val) {
         $this->spreads = $val;
         return $this;
     }
 
-    public function getStories($which = "")
-    {
-        if(array_key_exists($which, $this->stories)) {
+    public function getStories($which = "") {
+        if (array_key_exists($which, $this->stories)) {
             return $this->stories[$which];
         }
+
         return $this->stories;
     }
 
@@ -290,8 +278,7 @@ class IDMLPackage
      * @param array $val The array of stories.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setStories(array $val)
-    {
+    public function setStories(array $val) {
         $this->stories = $val;
         return $this;
     }
@@ -299,8 +286,7 @@ class IDMLPackage
     /**
      * Returns the DOMDocument object of the BackingStory.xml file.
      */
-    public function getBackingStory()
-    {
+    public function getBackingStory() {
         return $this->backingStory;
     }
 
@@ -309,8 +295,7 @@ class IDMLPackage
      * @param \DOMDocument $val The BackingStory.xml file's DOMDocument.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setBackingStory(\DOMDocument $val)
-    {
+    public function setBackingStory(\DOMDocument $val) {
         $this->backingStory = $val;
         return $this;
     }
@@ -318,8 +303,7 @@ class IDMLPackage
     /**
      * Returns the DOMDocument object of the Tags.xml file.
      */
-    public function getTags()
-    {
+    public function getTags() {
         return $this->tags;
     }
 
@@ -328,8 +312,7 @@ class IDMLPackage
      * @param \DOMDocument $val The Tags.xml file's DOMDocument.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setTags(\DOMDocument $val)
-    {
+    public function setTags(\DOMDocument $val) {
         $this->tags = $val;
         return $this;
     }
@@ -337,8 +320,7 @@ class IDMLPackage
     /**
      * Returns the DOMDocument object of the Mapping.xml file.
      */
-    public function getMapping()
-    {
+    public function getMapping() {
         return $this->mapping;
     }
 
@@ -347,8 +329,7 @@ class IDMLPackage
      * @param \DOMDocument $val The Mapping.xml file's DOMDocument.
      * @return IDMLPackage\IDMLPackage This object for method chaining.
      */
-    public function setMapping(\DOMDocument $val)
-    {
+    public function setMapping(\DOMDocument $val) {
         $this->mapping = $val;
         return $this;
     }
@@ -356,8 +337,7 @@ class IDMLPackage
     /**
      * Returns a string containing the directory name of this IDML.
      */
-    public function getDirectory()
-    {
+    public function getDirectory() {
         return $this->directory;
     }
 
@@ -365,22 +345,22 @@ class IDMLPackage
      * Set the directory for this IDML package. Basically if you have /directory/idmlfile.idml
      * and unzipped it, you'd setDirectory("/directory/").
      */
-    public function setDirectory($val)
-    {
-        if(is_dir($val) || is_null($val)) {
+    public function setDirectory($val) {
+        if (is_dir($val) || is_null($val)) {
             $this->directory = $val;
-            if(is_null($val) === false && mb_substr($val, -1) !== "/") {
+
+            if (!is_null($val) && mb_substr($val, -1) !== "/") {
                 $this->directory .= "/";
             }
         }
+
         return $this;
     }
 
     /**
      * Returns a string containing the zip file name of this IDML.
      */
-    public function getZip()
-    {
+    public function getZip() {
         return $this->zip;
     }
 
@@ -390,10 +370,10 @@ class IDMLPackage
      * and load all the stuff.
      * The __destruct() method ensures this temporary directory will be deleted upon object destruction.
      */
-    public function setZip($val)
-    {
+    public function setZip($val) {
         $this->zip = realpath($val);
-        if(empty($this->getDirectory()) && $this->getDirectory() !== 0) {
+
+        if (empty($this->getDirectory()) && $this->getDirectory() !== 0) {
             // gotta love empty() and PHP's automatic type-conversion :/
             $directoryName = dirname($val) . DIRECTORY_SEPARATOR . "." . basename($val);
             mkdir($directoryName, 0775);
@@ -403,14 +383,14 @@ class IDMLPackage
             $zip->extractTo($directoryName);
             $zip->close();
         }
+
         return $this;
     }
 
     /**
      * Set all array properties to empty arrays.
      */
-    public function unsetArrays()
-    {
+    public function unsetArrays() {
         $this->setSpreads([])
             ->setMasterSpreads([])
             ->setStories([]);
@@ -420,8 +400,7 @@ class IDMLPackage
     /**
      * Special method to load the designmap.xml of this IDML which is required to get all of the other components.
      */
-    public function loadDesignMap()
-    {
+    public function loadDesignMap() {
         $designmap = $this->createDom($this->getDirectory() . "designmap.xml");
         $this->setDesignMap($designmap);
         return $this;
@@ -434,22 +413,26 @@ class IDMLPackage
      * instantiation (new IDMLPackage\IDMLPackage("idmlfile.idml")) or by calling
      * the setZip() or setDirectory() methods.
      */
-    public function load()
-    {
+    public function load() {
         // since some files are appended to arrays, let's unset those arrays when we load just to be safe
         $this->unsetArrays();
-        if($this->getDesignMap() instanceof \DOMDocument == false) {
+
+        if (!($this->getDesignMap() instanceof \DOMDocument)) {
             $this->loadDesignMap();
         }
+
         $xpath = new \DOMXPath($this->getDesignMap());
         $xpath->registerNamespace("idPkg", "http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging");
         // I just didn't want to type all the loading logic out so I did a complicated loop
-        foreach($this->packageElements as $packageElement => $setPrefix) {
+
+        foreach ($this->packageElements as $packageElement => $setPrefix) {
             $elements = $xpath->query("//idPkg:$packageElement");
-            if($elements->length > 0) {
-                foreach($elements as $element) {
+
+            if ($elements->length > 0) {
+                foreach ($elements as $element) {
                     $filename = $element->getAttribute("src");
-                    if(file_exists($this->getDirectory() . $filename)) {
+
+                    if (file_exists($this->getDirectory() . $filename)) {
                         $file = $this->createDom($filename);
                         $setter = "$setPrefix$packageElement";
                         $this->$setter($file);
@@ -457,14 +440,14 @@ class IDMLPackage
                 }
             }
         }
+
         return $this;
     }
 
     /**
      * Save the designmap.xml file to disk.
      */
-    public function saveDesignMap()
-    {
+    public function saveDesignMap() {
         $this->getDesignMap()->save($this->getDesignMap()->documentURI);
         return $this;
     }
@@ -472,8 +455,7 @@ class IDMLPackage
     /**
      * Save the stories files to disk.
      */
-    public function saveStories()
-    {
+    public function saveStories() {
         $this->saveArrayOfDoms($this->getStories());
         return $this;
     }
@@ -481,8 +463,7 @@ class IDMLPackage
     /**
      * Save the master spreads files to disk.
      */
-    public function saveMasterSpreads()
-    {
+    public function saveMasterSpreads() {
         $this->saveArrayOfDoms($this->getMasterSpreads());
         return $this;
     }
@@ -490,8 +471,7 @@ class IDMLPackage
     /**
      * Save the spreads files to disk.
      */
-    public function saveSpreads()
-    {
+    public function saveSpreads() {
         $this->saveArrayOfDoms($this->getSpreads());
         return $this;
     }
@@ -499,24 +479,27 @@ class IDMLPackage
     /**
      * Saves all of the individual documents in the IDML package to their documentURI locations.
      */
-    public function saveAll()
-    {
+    public function saveAll() {
         $this->saveDesignMap()
             ->saveStories()
             ->saveMasterSpreads()
             ->saveSpreads();
-        foreach($this->packageElements as $element => $setPrefix) {
-            if($setPrefix == "set") {
+
+        foreach ($this->packageElements as $element => $setPrefix) {
+            if ($setPrefix == "set") {
                 $getter = "get$element";
                 $file = $this->$getter();
-                if($file instanceof \DOMDocument) {
+
+                if ($file instanceof \DOMDocument) {
                     $file->save($file->documentURI);
                 }
             }
         }
-        if($this->isZip()) {
+
+        if ($this->isZip()) {
             $this->zipPackage($this->getZip());
         }
+
         return $this;
     }
 
@@ -525,34 +508,36 @@ class IDMLPackage
      * @param string $name [optional] If supplied, this is the filename of the zipped package. If not supplied,
      * this defaults to the name of the directory of this IDML package with a ".idml" extension.
      */
-    public function zipPackage($name = "")
-    {
+    public function zipPackage($name = "") {
         $currentDirectory = getcwd();
         chdir($this->getDirectory());
-        if($name == "") {
-            if(empty($this->getZip()) == false) {
+
+        if ($name == "") {
+            if (!empty($this->getZip())) {
                 $name = basename($this->getZip());
             } else {
                 $name = basename($this->getDirectory()) . ".idml";
             }
         }
+
         $zip = new \ZipArchive();
         $zip->open($name, \ZipArchive::CREATE);
         $dir = new \SplFileInfo(".");
-        // this chunk is from my ZipFile class that extends PHP's ZipArchive.
-        // https://github.com/zandrmartin/php-zipfile
-        // it is included here to make this class standalone but ideally you'd factor this out
-        if($dir->isDir()) {
+
+        // this is included here to make this class standalone, but ideally
+        // you'd factor it out into a class that extends \ZipArchive
+        if ($dir->isDir()) {
             $contents = $this->getDirectoryContents($this->getDirectory());
             $baseDir = $dir->getPathInfo()->getRealPath();
         } else {
             $contents = [];
         }
-        if(count($contents) === 0) {
+
+        if (count($contents) === 0) {
             $zip->addEmptyDir($dir->getBasename());
         } else {
-            foreach($contents as $c) {
-                if(is_dir($c)) {
+            foreach ($contents as $c) {
+                if (is_dir($c)) {
                     // safe to do because directories will always come before their contents
                     // in the array returned by getDirectoryContents()
                     $zip->addEmptyDir($dir->getBasename());
@@ -561,6 +546,7 @@ class IDMLPackage
                 }
             }
         }
+
         $zip->close();
         $this->setZip($name);
         chdir($currentDirectory);
@@ -571,8 +557,7 @@ class IDMLPackage
      * Adds a story to the story array of this IDML package.
      * @param \DOMDocument $val The story to add.
      */
-    public function addStory(\DOMDocument $val)
-    {
+    public function addStory(\DOMDocument $val) {
         $key = str_replace(["Story_", ".xml"], "", basename($val->documentURI));
         $this->stories[$key] = $val;
         return $this;
@@ -582,8 +567,7 @@ class IDMLPackage
      * Adds a story to the designmap of the IDML package so InDesign knows it is there.
      * @param \DOMDocument $val The story to add to the designmap.
      */
-    public function addStoryToDesignMap(\DOMDocument $val)
-    {
+    public function addStoryToDesignMap(\DOMDocument $val) {
         $this->addStory($val);
         $node = $this->getDesignMap()->createElement("idPkg:Story");
         $this->getDesignMap()->documentElement->appendChild($node);
@@ -596,8 +580,7 @@ class IDMLPackage
      * Add a spread to the spreads property of this package.
      * Does NOT do anything other than this - no file creation/saving/etc.
      */
-    public function addSpread(\DOMDocument $val)
-    {
+    public function addSpread(\DOMDocument $val) {
         $this->spreads[$this->getSelfAttributeOfDom($val)] = $val;
         return $this;
     }
@@ -610,11 +593,11 @@ class IDMLPackage
      * @param \DOMDocument $spread The spread you want to which you want to add the element. If not provided, defaults
      * to whatever getSpread() returns.
      */
-    public function addElementToSpread(\DOMNode $val, $spread = "")
-    {
-        if($spread instanceof \DOMDocument === false) {
+    public function addElementToSpread(\DOMNode $val, $spread = "") {
+        if (!($spread instanceof \DOMDocument)) {
             $spread = $this->getSpread();
         }
+
         $spreadNodelist = $spread->getElementsByTagName("Spread");
         $spreadElement = $spreadNodelist->item($spreadNodelist->length - 1);
         $spreadElement->appendChild($spread->importNode($val, true));
@@ -625,8 +608,7 @@ class IDMLPackage
      * Add a master spread to the master spreads property of this package.
      * Does NOT do anything other than this - no file creation/saving/etc.
      */
-    public function addMasterSpread(\DOMDocument $val)
-    {
+    public function addMasterSpread(\DOMDocument $val) {
         $this->masterSpreads[$this->getSelfAttributeOfDom($val)] = $val;
         return $this;
     }
@@ -637,8 +619,7 @@ class IDMLPackage
      * in a thousand different places. Don't use if your IDML files have multiple spreads.
      * @return \DOMDocument The spread.
      */
-    public function getSpread()
-    {
+    public function getSpread() {
         return array_values($this->getSpreads())[0];
     }
 
@@ -650,23 +631,23 @@ class IDMLPackage
      * @return mixed If $selfsOnly is true, this is an array of strings. Otherwise, it is a
      * \DOMNodeList of the layer elements.
      */
-    public function getLayers($selfsOnly = false, $visibleOnly = true)
-    {
+    public function getLayers($selfsOnly = false, $visibleOnly = true) {
         $xpath = new \DOMXPath($this->getDesignMap);
-        if($visibleOnly) {
-            $query = "//Layer[@Visible='true']";
-        } else {
-            $query = "//Layer";
-        }
+        $query = ($visibleOnly) ? "//Layer[@Visible='true']" : "//Layer";
         $layers = $xpath->query($query);
-        if($selfsOnly) {
-            $names = [];
-            foreach($layers as $layer) {
-                $names[] = $layer->getAttribute("Self");
-            }
+
+        if ($selfsOnly) {
+            $names = array_map(
+                function ($layer) {
+                    return $layer->getAttribute("Self");
+                },
+                $layers
+            );
+
             sort($names);
             return array_unique($names);
         }
+
         return $layers;
     }
 
@@ -675,23 +656,25 @@ class IDMLPackage
      * @param string $self The self attibute of the requested DOM element. Generally something like "u12f".
      * @return mixed A \DOMNode of the requested element if it is found, or false if it is not.
      */
-    public function getElementBySelfAttribute($self = "")
-    {
-        if($self !== "") {
+    public function getElementBySelfAttribute($self = "") {
+        if ($self !== "") {
             $doms = array_merge(
                 $this->getSpreads(),
                 $this->getMasterSpreads(),
                 $this->getStories(),
                 [$this->getBackingStory()]
             );
-            foreach($doms as $dom) {
+
+            foreach ($doms as $dom) {
                 $xpath = new \DOMXPath($dom);
                 $elements = $xpath->query("//node()[@Self='$self']");
-                if($elements->length > 0) {
+
+                if ($elements->length > 0) {
                     return $elements->item(0);
                 }
             }
         }
+
         return false;
     }
 
@@ -699,12 +682,8 @@ class IDMLPackage
      * Determine whether this IDML package was loaded from a zipped .idml package, or from an unzipped directory.
      * @return bool True means it was created from a zip. False means it was created from a directory.
      */
-    protected function isZip()
-    {
-        if(empty($this->getZip()) == false && basename($this->getDirectory())[0] == ".") {
-            return true;
-        }
-        return false;
+    protected function isZip() {
+        return (!empty($this->getZip()) && basename($this->getDirectory())[0] === ".");
     }
 
     /**
@@ -712,19 +691,20 @@ class IDMLPackage
      * @param string $filename [optional] The name of the file to be loaded.
      * @return \DOMDocument The object that was created.
      */
-    protected function createDom($filename = "")
-    {
+    protected function createDom($filename = "") {
         $dom = new \DOMDocument();
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
         $tryFiles = [$filename, $this->getDirectory() . $filename];
-        if($filename != "") {
-            foreach($tryFiles as $file) {
-                if(file_exists($file)) {
+
+        if ($filename != "") {
+            foreach ($tryFiles as $file) {
+                if (file_exists($file)) {
                     $dom->load($file);
                 }
             }
         }
+
         return $dom;
     }
 
@@ -732,11 +712,11 @@ class IDMLPackage
      * Saves each \DOMDocument in an array to disk, using its documentURI property as the file location.
      * @param array $array An array of \DOMDocuments.
      */
-    protected function saveArrayOfDoms(array $array)
-    {
-        foreach($array as $dom) {
+    protected function saveArrayOfDoms(array $array) {
+        foreach ($array as $dom) {
             $dom->save($dom->documentURI);
         }
+
         return $this;
     }
 
@@ -744,8 +724,7 @@ class IDMLPackage
      * A convenience method to get the self attribute of the main element of a component.
      * e.g. for a story, this returns u123 from <Story Self="u123">
      */
-    protected function getSelfAttributeOfDom(\DOMDocument $dom)
-    {
+    protected function getSelfAttributeOfDom(\DOMDocument $dom) {
         $elementName = str_replace("idPkg:", "", $dom->documentElement->nodeName);
         $element = $dom->documentElement->getElementsByTagName($elementName)->item(0);
         return $element->getAttribute("Self");
@@ -756,33 +735,38 @@ class IDMLPackage
      * @param \DOMElement $node The element for which we want the tag.
      * @return mixed The tag if one is found, or false if one is not found.
      */
-    public function getMarkupTag(\DOMElement $node)
-    {
+    public function getMarkupTag(\DOMElement $node) {
         $tag = false;
         $selfs = [$node->getAttribute("Self")];
         $xpath = Build::DOMXPath($this->getBackingStory());
-        if($node->nodeName == "TextFrame") {
+
+        if ($node->nodeName === "TextFrame") {
             $selfs[] = $node->getAttribute("ParentStory");
         }
-        foreach($selfs as $self) {
+
+        foreach ($selfs as $self) {
             $xmlElement = false;
-            while($node->parentNode) {
+
+            while ($node->parentNode) {
                 $node = $node->parentNode;
-                if("XMLElement" == $node->nodeName) {
+                if ("XMLElement" === $node->nodeName) {
                     $xmlElement = $node;
                     break;
                 }
             }
-            if($xmlElement == false) {
+
+            if ($xmlElement === false) {
                 $xmlElements = $xpath->query("//XMLElement[@XMLContent='$self']");
-                if($xmlElements->length > 0) {
+                if ($xmlElements->length > 0) {
                     $xmlElement = $xmlElements->item(0);
                 }
             }
-            if($xmlElement && empty($xmlElement->getAttribute("MarkupTag")) == false) {
+
+            if ($xmlElement && !empty($xmlElement->getAttribute("MarkupTag"))) {
                 $tag = str_replace("XMLTag/", "", $xmlElement->getAttribute("MarkupTag"));
             }
         }
+
         return urldecode($tag);
     }
 }
