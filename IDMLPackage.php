@@ -20,6 +20,13 @@
 // OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace IDMLPackage;
+
+/**
+ * Generic exception class thrown when any error is encountered within the
+ * IDMLPackage class.
+ */
+class IDMLError extends \Exception {}
+
 /**
  * An object that handles all of the individual files in an IDML package.
  * This is a very simple class that was developed as part of a much larger
@@ -105,7 +112,7 @@ class IDMLPackage {
 
     /**
      * Basically if this package was loaded from an IDML file, we're assuming we unzipped it,
-     * so delete all the temp directory and files we created by unzipping it.
+     * so delete the temp directory and all the files we created by unzipping it.
      */
     public function __destruct() {
         if ($this->isZip() && is_dir($this->getDirectory())) {
@@ -404,7 +411,8 @@ class IDMLPackage {
     }
 
     /**
-     * Special method to load the designmap.xml of this IDML which is required to get all of the other components.
+     * Special method to load the designmap.xml of this IDML which is required
+     * to get all of the other components.
      */
     public function loadDesignMap() {
         $designmap = $this->createDom($this->getDirectory() . "designmap.xml");
@@ -416,8 +424,8 @@ class IDMLPackage {
      * This is the master load method that will create populate the object with
      * DOMDocuments of the component XML files. You need to set the location of
      * the IDML before this method is called - either by passing it with the
-     * instantiation (new IDMLPackage\IDMLPackage("idmlfile.idml")) or by calling
-     * the setZip() or setDirectory() methods.
+     * instantiation (new IDMLPackage\IDMLPackage("idmlfile.idml")) or by
+     * calling the setZip() or setDirectory() methods.
      */
     public function load() {
         // since some files are appended to arrays, let's unset those arrays when we load just to be safe
@@ -660,7 +668,8 @@ class IDMLPackage {
     /**
      * Returns the specified DOM element if it can be found within the package.
      * @param string $self The self attibute of the requested DOM element. Generally something like "u12f".
-     * @return mixed A \DOMNode of the requested element if it is found, or false if it is not.
+     * @throws IDMLError if the specified node cannot be found.
+     * @return mixed A \DOMNode of the requested element if it is found.
      */
     public function getElementBySelfAttribute($self = "") {
         if ($self !== "") {
@@ -681,7 +690,7 @@ class IDMLPackage {
             }
         }
 
-        return false;
+        throw new IDMLError("Unable to find DOM node with self attribute $self.");
     }
 
     /**
@@ -701,10 +710,9 @@ class IDMLPackage {
         $dom = new \DOMDocument();
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
-        $tryFiles = [$filename, $this->getDirectory() . $filename];
 
         if ($filename != "") {
-            foreach ($tryFiles as $file) {
+            foreach ([$filename, $this->getDirectory() . $filename] as $file) {
                 if (file_exists($file)) {
                     $dom->load($file);
                 }
@@ -740,7 +748,8 @@ class IDMLPackage {
      * Returns the ParagraphStyle or CharacterStyle node from the Styles.xml file that is
      * assocated with the given $node.
      * @param \DOMNode $node The node whose AppliedStyle you want.
-     * @return mixed Either the DOMNode of the applied style you want, or false if it could not be found.
+     * @throws IDMLError if the style node you want could not be found.
+     * @return mixed Either the DOMNode of the applied style you want.
      */
     public function getAppliedStyle(\DOMNode $node) {
         $xpath = Build::DOMXPath($this->getStyles());
@@ -749,18 +758,24 @@ class IDMLPackage {
         $style = $node->getAttribute($type);
 
         if (empty($style)) {
-            return false;
+            throw new IDMLError("Unable to find style node for given {$node->nodeName}.");
         }
 
         $nodeList = $xpath->query("//node()[@Self='$style']");
-        return ($nodeList->length > 0) ? $nodeList->item(0) : false;
+
+        if ($nodeList->length > 0) {
+           return $nodeList->item(0);
+        }
+
+        throw new IDMLError("Unable to find style node for given {$node->nodeName}.");
     }
 
     /**
      * Searches for a given style attribute as exhaustively as possible.
      * @param \DOMNode $node The node whose attribute you want.
      * @param string $attr The name of the attribute you want.
-     * @return mixed Either a string of the attribute you want, or false if it could not be found.
+     * @throws IDMLError if attribute could not be found.
+     * @return mixed Either a string of the attribute you want.
      */
     public function getStyleAttribute(\DOMNode $node, $attr) {
         $parent = $node->parentNode;
@@ -775,14 +790,15 @@ class IDMLPackage {
             }
         }
 
-        return false;
+        throw new IDMLError("Unable to find value for attribute $attr.");
     }
 
     /**
      * Searches for a given style property as exhaustively as possible.
      * @param \DOMNode $node The node whose property you want.
      * @param string $prop The name of the property you want.
-     * @return mixed Either a string of the property you want, or false if it could not be found.
+     * @throws IDMLError if property could not be found.
+     * @return mixed Either a string of the property you want.
      */
     public function getStyleProperty(\DOMNode $node, $prop) {
         $parent = $node->parentNode;
@@ -805,13 +821,14 @@ class IDMLPackage {
             }
         }
 
-        return false;
+        throw new IDMLError("Unable to find value for property $prop.");
     }
 
     /**
      * Get the tag of an element from the XML\BackingStory.xml file.
      * @param \DOMElement $node The element for which we want the tag.
-     * @return mixed The tag if one is found, or false if one is not found.
+     * @throws IDMLError if the tag could not be found.
+     * @return mixed The tag if one is found.
      */
     public function getMarkupTag(\DOMElement $node) {
         $tag = false;
@@ -845,6 +862,10 @@ class IDMLPackage {
             }
         }
 
-        return urldecode($tag);
+        if ($tag !== false) {
+            return urldecode($tag);
+        }
+
+        throw new IDMLError("Unable to find markup tag for given {$node->nodeName} node.");
     }
 }
