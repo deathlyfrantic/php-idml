@@ -42,9 +42,9 @@ effort into trying to make this a generically useful class.
   return the layer elements (`DOMNodes`) or the self attributes (e.g. "u12a") of the layers. The `$visibleOnly` flag
   determines whether non-visible layers should be included.
 - `getElementBySelfAttribute($self)`: Returns the element identified by `$self` from whatever file it lives in. So if
-  you're looking for `<Rectangle Self="u12a">` but don't know if it's in a spread or a story, use this. Returns false if
-  it fails but I can't imagine you'd be looking for an element by using an arbitrary self attribute. If you do, check
-  for false.
+  you're looking for `<Rectangle Self="u12a">` but don't know if it's in a spread or a story, use this. Throws if
+  it fails but I can't imagine you'd be looking for an element by using an arbitrary self attribute. If you do, wrap
+  this call in a `try/catch` block.
 - `addStoryToDesignMap($val)`: If you've created a new story, this is a quick method to add your story to the package
   and put it in the `designmap.xml` so InDesign can find it. `$val` needs to be a `DOMDocument`.
 - `getAppliedStyle($node)`: given a `CharacterStyleRange` or `ParagraphStyleRange` element, this method will return the
