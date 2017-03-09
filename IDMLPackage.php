@@ -74,16 +74,16 @@ class IDMLPackage {
      * See $this->load(). I am lazy and hate typing.
      */
     protected $packageElements = [
-        "Graphic"      => "set",
-        "Fonts"        => "set",
-        "Styles"       => "set",
-        "Preferences"  => "set",
-        "Tags"         => "set",
-        "MasterSpread" => "add",
-        "Spread"       => "add",
         "BackingStory" => "set",
+        "Fonts"        => "set",
+        "Graphic"      => "set",
+        "Mapping"      => "set",
+        "MasterSpread" => "add",
+        "Preferences"  => "set",
+        "Spread"       => "add",
         "Story"        => "add",
-        "Mapping"      => "set"
+        "Styles"       => "set",
+        "Tags"         => "set"
     ];
 
     /**
@@ -265,6 +265,12 @@ class IDMLPackage {
         return $this;
     }
 
+    /**
+     * Get either a single story or an array of stories.
+     * @param string $which [optional] The self id of the story you wish to return.
+     * @return [mixed] Without $which parameter, returns an array of all stories.
+     * With $which parameter, returns a single DOMDocument of the specified story.
+     */
     public function getStories($which = "") {
         if (array_key_exists($which, $this->stories)) {
             return $this->stories[$which];
@@ -728,6 +734,78 @@ class IDMLPackage {
         $elementName = str_replace("idPkg:", "", $dom->documentElement->nodeName);
         $element = $dom->documentElement->getElementsByTagName($elementName)->item(0);
         return $element->getAttribute("Self");
+    }
+
+    /**
+     * Returns the ParagraphStyle or CharacterStyle node from the Styles.xml file that is
+     * assocated with the given $node.
+     * @param \DOMNode $node The node whose AppliedStyle you want.
+     * @return mixed Either the DOMNode of the applied style you want, or false if it could not be found.
+     */
+    public function getAppliedStyle(\DOMNode $node) {
+        $xpath = Build::DOMXPath($this->getStyles());
+        $nodeType = str_replace("StyleRange", "", $node->nodeName);
+        $type = "Applied{$nodeType}Style";
+        $style = $node->getAttribute($type);
+
+        if (empty($style)) {
+            return false;
+        }
+
+        $nodeList = $xpath->query("//node()[@Self='$style']");
+        return ($nodeList->length > 0) ? $nodeList->item(0) : false;
+    }
+
+    /**
+     * Searches for a given style attribute as exhaustively as possible.
+     * @param \DOMNode $node The node whose attribute you want.
+     * @param string $attr The name of the attribute you want.
+     * @return mixed Either a string of the attribute you want, or false if it could not be found.
+     */
+    public function getStyleAttribute(\DOMNode $node, $attr) {
+        $parent = $node->parentNode;
+        $appliedCSR = $this->getAppliedStyle($node);
+        $appliedPSR = $this->getAppliedStyle($parent);
+
+        // order of elements here is intentional
+        foreach ([$node, $appliedCSR, $parent, $appliedPSR] as $element) {
+            $ret = $element->getAttribute($attr);
+            if (!empty($ret)) {
+                return $ret;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Searches for a given style property as exhaustively as possible.
+     * @param \DOMNode $node The node whose property you want.
+     * @param string $prop The name of the property you want.
+     * @return mixed Either a string of the property you want, or false if it could not be found.
+     */
+    public function getStyleProperty(\DOMNode $node, $prop) {
+        $parent = $node->parentNode;
+        $appliedCSR = $this->getAppliedStyle($node);
+        $appliedPSR = $this->getAppliedStyle($parent);
+        $propertyGroups = [];
+
+        // order of elements here is intentional
+        foreach ([$node, $appliedCSR, $parent, $appliedPSR] as $element) {
+            $p = $element->getElementsByTagName("Properties");
+            if ($p->length > 0) {
+                $propertyGroups[] = $p->item(0);
+            }
+        }
+
+        foreach ($propertyGroups as $group) {
+            $propList = $group->getElementsByTagName($prop);
+            if ($propList->length > 0) {
+                return $propList->item(0)->nodeValue;
+            }
+        }
+
+        return false;
     }
 
     /**
