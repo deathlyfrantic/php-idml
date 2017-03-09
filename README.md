@@ -30,27 +30,33 @@ most of what this class does.
 Generally if you want Whatever, use `getWhatever()`. You likely won't need to use any of the setters but they're there
 if you want to do something weird. Note `getSpread()` is a convenience method that gets the first spread, operating
 under the assumption that there is only one. This applied to the project from which this class was born, but may not
-apply to yours. This method is also used in the `addElementToSpread()` method if a spread is not explicitly
-provided. Use caution.
+apply to yours. This method is also used in the `addElementToSpread()` method if a spread is not explicitly provided.
+Use caution.
 
 #### Notable Methods
 
 These are just the most generic methods that existed in the project-specific version of this class. I have put zero
 effort into trying to make this a generically useful class.
 
-- `getLayers($selfsOnly, $visibleOnly)`: Returns an array of layers from the `designmap.xml` of this IDML. It can
-  either return the layer elements (`DOMNodes`) or the self attributes (e.g. "u12a") of the layers. The
-  `$visibleOnly` flag determines whether non-visible layers should be included.
-- `getElementBySelfAttribute($self)`: Returns the element identified by `$self` from whatever file it lives in. So
-  if you're looking for `<Rectangle Self="u12a">` but don't know if it's in a spread or a story, use this. Returns
-  false if it fails but I can't imagine you'd be looking for an element by using an arbitrary self attribute. If you do,
-  check for false.
-- `addStoryToDesignMap($val)`: If you've created a new story, this is a quick method to add your story to the
-  package and put it in the `designmap.xml` so InDesign can find it. `$val` needs to be a `DOMDocument`.
+- `getLayers($selfsOnly, $visibleOnly)`: Returns an array of layers from the `designmap.xml` of this IDML. It can either
+  return the layer elements (`DOMNodes`) or the self attributes (e.g. "u12a") of the layers. The `$visibleOnly` flag
+  determines whether non-visible layers should be included.
+- `getElementBySelfAttribute($self)`: Returns the element identified by `$self` from whatever file it lives in. So if
+  you're looking for `<Rectangle Self="u12a">` but don't know if it's in a spread or a story, use this. Returns false if
+  it fails but I can't imagine you'd be looking for an element by using an arbitrary self attribute. If you do, check
+  for false.
+- `addStoryToDesignMap($val)`: If you've created a new story, this is a quick method to add your story to the package
+  and put it in the `designmap.xml` so InDesign can find it. `$val` needs to be a `DOMDocument`.
+- `getAppliedStyle($node)`: given a `CharacterStyleRange` or `ParagraphStyleRange` element, this method will return the
+  associated `CharacterStyle` or `ParagraphStyle` node from the `Styles.xml` file.
+- `getStyleAttribute($node, $attr)`: given a `CharacterStyleRange` or `ParagraphStyleRange` node and the name of an
+  attribute, this method will return the value of that attribute as thoroughly as possible by checking the node, its
+  applied style node, and its parent and parent's applied style nodes (if applicable).
+- `getStyleProperty($node, $prop)`: the same as `getStyleAttribute()` but for properties rather than attributes.
 - `getMarkupTag($node)`: Get the tag associated with a given element (`DOMNode`) - or an ancestor. It searches every
-  element from `$node` up and returns the first tag it finds. This logic may not exactly jibe with how tags are
-  intended to work in IDML; it does what I need it to do for my project but may not work for you. The tag it returns
-  is `urldecode()`ed.
+  element from `$node` up and returns the first tag it finds. This logic may not exactly jibe with how tags are intended
+  to work in IDML; it does what I need it to do for my project but may not work for you. The tag it returns is
+  `urldecode()`ed.
 - `saveAll()`: Save all the files in the IDML. There are individual save methods for saving various pieces but why
   bother? Just use this one.
 
