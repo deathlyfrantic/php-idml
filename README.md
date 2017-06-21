@@ -3,27 +3,36 @@
 A simple class to handle file management of Adobe InDesign IDML files. Keeping track of all the individual files within
 an `.idml` package is a chore. This helps a bit. (A *bit*.)
 
+### Installation
+
+    composer require prometee/php-idml    
+
 #### Usage
 
 Instantiate the object:
 
-    require_once "IDMLPackage.php";
-    $idml = new \IDMLPackage\IDMLPackage("filename.idml");
+    require __DIR__.'/../vendor/autoload.php';
+    $idml = new \IDML\Package();
+    $idml->setZip("filename.idml")
+    $idml->load();
 
 This will unzip `filename.idml` to a directory called `.filename.idml`. This directory will be deleted when the object
 is garbage-collected (see the `__destruct()` method). Alternatively, if you keep your IDMLs stored unzipped, a directory
 can also be passed to the constructor:
 
-    $idml = new \IDMLPackage\IDMLPackage("/path/to/idml/");
+    require __DIR__.'/../vendor/autoload.php';
+    $idml = new \IDML\Package();
+    $idml->setDirectory("/path/to/idml/");
+    $idml->load();
 
 This directory will not be deleted upon object destruction. (Admittedly this is not a typical use-case but happened to
 be how the project I was working on stored things.)
 
-The `IDMLPackge` object is essentially a file manager/server of `DOMDocument` objects for all the internal files. That's
-most of what this class does.
+The `IDML\Package` object is essentially a file manager/server of `DOMDocument` objects for all the internal files.
+That's most of what this class does.
 
     $spreads = $idml->getSpreads();
-    $storyu12a = $idml->getStories("u12a");
+    $storyu12a = $idml->getStorie("u12a");
     $backingStory = $idml->getBackingStory();
     // etc
 
@@ -57,7 +66,7 @@ effort into trying to make this a generically useful class.
   element from `$node` up and returns the first tag it finds. This logic may not exactly jibe with how tags are intended
   to work in IDML; it does what I need it to do for my project but may not work for you. The tag it returns is
   `urldecode()`ed.
-- `saveAll()`: Save all the files in the IDML. There are individual save methods for saving various pieces but why
+- `saveAll($zip_file_path)`: Save all the files in the IDML. There are individual save methods for saving various pieces but why
   bother? Just use this one.
 
 Everything else you'll just have to figure out on your own.
