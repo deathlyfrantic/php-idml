@@ -44,6 +44,10 @@ use IDML\Exception\Error;
  */
 class Package {
 
+    const IDML_FILENAME_EXTENSION = ".idml";
+    const IDML_NAMESPACE_PREFIX = "idPkg";
+    const IDML_NAMESPACE_URI = "http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging";
+
     /**
      * @var DOMDocument
      */
@@ -107,7 +111,34 @@ class Package {
     /**
      * @var string
      */
-    protected $zip;
+    protected $zip = '';
+
+    /**
+     * @var string
+     */
+    protected $unzip_path = '';
+
+    /**
+     * @return string
+     */
+    public function getUnzipPath()
+    {
+        if (!$this->unzip_path && $this->zip) {
+            $this->unzip_path = dirname($this->zip) . DIRECTORY_SEPARATOR . "." . basename($this->zip);
+        }
+        return $this->unzip_path;
+    }
+
+    /**
+     * @param string $unzip_path
+     * @return $this
+     */
+    public function setUnzipPath($unzip_path)
+    {
+        $this->unzip_path = rtrim($unzip_path, '/').'/';
+
+        return $this;
+    }
 
     /**
      * Return the full complete paths of the entire contents of a directory including all subdirectories.
@@ -160,13 +191,19 @@ class Package {
      * The project I developed this for uses IDML packages that live in an unzipped form
      * so they can be easily-modified before zipping up for processing.
      *
-     * @param string $val
+     * @param string|null $path
      */
-    public function __construct($val) {
-        if (preg_match("#.idml$#i", $val) !== false && file_exists($val)) {
-            $this->setZip($val)->load();
-        } else if (is_dir($val)) {
-            $this->setDirectory($val)->load();
+    public function __construct($path = null) {
+        if ($path) {
+            if (preg_match("#".self::IDML_FILENAME_EXTENSION."$#i", $path)) {
+                $this
+                    ->setZip($path)
+                    ->load();
+            } else if (is_dir($path)) {
+                $this
+                    ->setDirectory($path)
+                    ->load();
+            }
         }
     }
 
@@ -430,29 +467,28 @@ class Package {
     }
 
     /**
+     * Set the directory for this IDML package. Basically if you have /directory/idmlfile.idml
+     * and unzipped it, you'd setDirectory("/directory/").
+     * @param string $path
+     * @return $this
+     * @throws Error
+     */
+    public function setDirectory($path) {
+        if (is_dir($path)) {
+            $this->directory = rtrim(realpath($path), '/').'/';
+        } else {
+            throw new Error(sprintf('Directory not found : %s', $path));
+        }
+
+        return $this;
+    }
+
+    /**
      * Returns a string containing the directory name of this IDML.
      * @return string
      */
     public function getDirectory() {
         return $this->directory;
-    }
-
-    /**
-     * Set the directory for this IDML package. Basically if you have /directory/idmlfile.idml
-     * and unzipped it, you'd setDirectory("/directory/").
-     * @param string $val
-     * @return $this
-     */
-    public function setDirectory($val) {
-        if (is_dir($val) || is_null($val)) {
-            $this->directory = $val;
-
-            if (!is_null($val) && mb_substr($val, -1) !== "/") {
-                $this->directory .= "/";
-            }
-        }
-
-        return $this;
     }
 
     /**
@@ -469,24 +505,38 @@ class Package {
      * and load all the stuff.
      * The __destruct() method ensures this temporary directory will be deleted upon object destruction.
      *
-     * @param $val string
+     * @param $path string
      * @return $this
+     * @throws Error
      */
-    public function setZip($val) {
-        $this->zip = realpath($val);
-
-        if (!$this->getDirectory()) {
-            // gotta love empty() and PHP's automatic type-conversion :/
-            $directoryName = dirname($val) . DIRECTORY_SEPARATOR . "." . basename($val);
-            mkdir($directoryName, 0775);
-            $this->setDirectory($directoryName);
-            $zip = new ZipArchive();
-            $zip->open($val);
-            $zip->extractTo($directoryName);
-            $zip->close();
+    public function setZip($path) {
+        if (file_exists($path)) {
+            $this->zip = realpath($path);
+            return $this;
+        } else {
+            throw new Error(sprintf('File not found : %s', $path));
         }
+    }
 
-        return $this;
+
+    /**
+     * @param string $zip_filename
+     * @param string $unzip_path
+     * @return bool
+     * @throws Error
+     */
+    public function unZip($zip_filename, $unzip_path) {
+        mkdir($unzip_path, 0777, true);
+        $this->setDirectory($unzip_path);
+        $zip = new ZipArchive();
+        if ($zip->open($zip_filename)) {
+            if (!$zip->extractTo($unzip_path)) {
+                throw new Error(sprintf('Unable to extract file : %s', $zip_filename));
+            }
+            return $zip->close();
+        } else {
+            throw new Error(sprintf('Unable to open file : %s', $zip_filename));
+        }
     }
 
     /**
@@ -520,28 +570,30 @@ class Package {
      * @return $this
      */
     public function load() {
+        if (!$this->getDirectory()) {
+            $this->unZip($this->getZip(), $this->getUnZipPath());
+        }
+
         // since some files are appended to arrays, let's unset those arrays when we load just to be safe
         $this->unsetArrays();
 
-        if (!($this->getDesignMap() instanceof DOMDocument)) {
-            $this->loadDesignMap();
-        }
+        $this->loadDesignMap();
 
         $xpath = new DOMXPath($this->getDesignMap());
-        $xpath->registerNamespace("idPkg", "http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging");
+        $xpath->registerNamespace(self::IDML_NAMESPACE_PREFIX, self::IDML_NAMESPACE_URI);
         // I just didn't want to type all the loading logic out so I did a complicated loop
 
         foreach ($this->packageElements as $packageElement => $setPrefix) {
-            $elements = $xpath->query("//idPkg:$packageElement");
+            $elements = $xpath->query("//".self::IDML_NAMESPACE_PREFIX.":".$packageElement);
 
-            if ($elements->length > 0) {
+            if ($elements->length) {
                 /** @var DOMElement $element */
                 foreach ($elements as $element) {
                     $filename = $element->getAttribute("src");
-
-                    if (file_exists($this->getDirectory() . $filename)) {
-                        $file = $this->createDom($filename);
-                        $setter = "$setPrefix$packageElement";
+                    $filepath = $this->getDirectory() . $filename;
+                    if (file_exists($filepath)) {
+                        $file = $this->createDom($filepath);
+                        $setter = $setPrefix.$packageElement;
                         $this->$setter($file);
                     }
                 }
@@ -589,9 +641,10 @@ class Package {
 
     /**
      * Saves all of the individual documents in the IDML package to their documentURI locations.
+     * @param null|string $zip_filepath
      * @return $this
      */
-    public function saveAll() {
+    public function saveAll($zip_filepath = null) {
         $this->saveDesignMap()
             ->saveStories()
             ->saveMasterSpreads()
@@ -599,7 +652,7 @@ class Package {
 
         foreach ($this->packageElements as $element => $setPrefix) {
             if ($setPrefix == "set") {
-                $getter = "get$element";
+                $getter = "get".$element;
                 $file = $this->$getter();
 
                 if ($file instanceof DOMDocument) {
@@ -608,8 +661,9 @@ class Package {
             }
         }
 
-        if ($this->isZip()) {
-            $this->zipPackage($this->getZip());
+        $zip_filepath = $zip_filepath ? $zip_filepath : ($this->isZip() ? $this->getZip() : null);
+        if ($zip_filepath) {
+            $this->zipPackage($zip_filepath);
         }
 
         return $this;
@@ -617,24 +671,24 @@ class Package {
 
     /**
      * Zip this package into an IDML file from its component parts.
-     * @param string $name [optional] If supplied, this is the filename of the zipped package. If not supplied,
+     * @param string|null $zip_filepath [optional] If supplied, this is the filename of the zipped package. If not supplied,
      * this defaults to the name of the directory of this IDML package with a ".idml" extension.
      * @return $this
      */
-    public function zipPackage($name = "") {
+    public function zipPackage($zip_filepath = null) {
         $currentDirectory = getcwd();
         chdir($this->getDirectory());
 
-        if ($name == "") {
-            if ($this->getZip()) {
-                $name = basename($this->getZip());
+        if (!$zip_filepath) {
+            if ($this->isZip()) {
+                $zip_filepath = basename($this->getZip());
             } else {
-                $name = basename($this->getDirectory()) . ".idml";
+                $zip_filepath = basename($this->getDirectory()) . self::IDML_FILENAME_EXTENSION;
             }
         }
 
         $zip = new ZipArchive();
-        $zip->open($name, ZipArchive::CREATE);
+        $zip->open($zip_filepath, ZipArchive::CREATE);
         $dir = new SplFileInfo(".");
 
         // this is included here to make this class standalone, but ideally
@@ -661,7 +715,7 @@ class Package {
         }
 
         $zip->close();
-        $this->setZip($name);
+        $this->setZip($zip_filepath);
         chdir($currentDirectory);
         return $this;
     }
@@ -684,7 +738,7 @@ class Package {
      */
     public function addStoryToDesignMap(DOMDocument $val) {
         $this->addStory($val);
-        $node = $this->getDesignMap()->createElement("idPkg:Story");
+        $node = $this->getDesignMap()->createElement(self::IDML_NAMESPACE_PREFIX.":Story");
         $this->getDesignMap()->documentElement->appendChild($node);
         $source = str_replace($this->getDirectory(), "", $val->documentURI);
         $node->setAttribute("src", $source);
@@ -788,7 +842,7 @@ class Package {
 
             foreach ($doms as $dom) {
                 $xpath = new DOMXPath($dom);
-                $elements = $xpath->query("//node()[@Self='$self']");
+                $elements = $xpath->query("//node()[@Self='".$self."']");
 
                 if ($elements->length > 0) {
                     return $elements->item(0);
@@ -796,7 +850,7 @@ class Package {
             }
         }
 
-        throw new Error("Unable to find DOM node with self attribute $self.");
+        throw new Error(sprintf("Unable to find DOM node with self attribute %s.", $self));
     }
 
     /**
@@ -809,23 +863,21 @@ class Package {
 
     /**
      * Create a DOMDocument and load it with the supplied file.
-     * @param string $filename [optional] The name of the file to be loaded.
+     * @param string $filename The name of the file to be loaded.
      * @return DOMDocument The object that was created.
+     * @throws Error
      */
-    protected function createDom($filename = "") {
+    protected function createDom($filename) {
         $dom = new DOMDocument();
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
 
-        if ($filename != "") {
-            foreach ([$filename, $this->getDirectory() . $filename] as $file) {
-                if (file_exists($file)) {
-                    $dom->load($file);
-                }
-            }
+        if ($filename && file_exists($filename)) {
+            $dom->load($filename);
+            return $dom;
+        } else {
+            throw new Error(sprintf("Unable to load file : %s.", $filename));
         }
-
-        return $dom;
     }
 
     /**
@@ -848,7 +900,7 @@ class Package {
      * @return string
      */
     protected function getSelfAttributeOfDom(DOMDocument $dom) {
-        $elementName = str_replace("idPkg:", "", $dom->documentElement->nodeName);
+        $elementName = str_replace(self::IDML_NAMESPACE_PREFIX.":", "", $dom->documentElement->nodeName);
         $element = $dom->documentElement->getElementsByTagName($elementName)->item(0);
         return $element->getAttribute("Self");
     }
@@ -863,20 +915,20 @@ class Package {
     public function getAppliedStyle(DOMElement $node) {
         $xpath = new DOMXPath($this->getStyles());
         $nodeType = str_replace("StyleRange", "", $node->nodeName);
-        $type = "Applied{$nodeType}Style";
+        $type = "Applied{".$nodeType."}Style";
         $style = $node->getAttribute($type);
 
         if (!$style) {
             throw new Error("Unable to find style node for given {$node->nodeName}.");
         }
 
-        $nodeList = $xpath->query("//node()[@Self='$style']");
+        $nodeList = $xpath->query("//node()[@Self='".$style."']");
 
         if ($nodeList->length > 0) {
            return $nodeList->item(0);
         }
 
-        throw new Error("Unable to find style node for given {$node->nodeName}.");
+        throw new Error(sprintf("Unable to find style node for given {%s}.", $node->nodeName));
     }
 
     /**
@@ -899,7 +951,7 @@ class Package {
             }
         }
 
-        throw new Error("Unable to find value for attribute $attr.");
+        throw new Error(sprintf("Unable to find value for attribute %s.", $attr));
     }
 
     /**
@@ -932,7 +984,7 @@ class Package {
             }
         }
 
-        throw new Error("Unable to find value for property $prop.");
+        throw new Error(sprintf("Unable to find value for property %s.", $prop));
     }
 
     /**
@@ -954,6 +1006,7 @@ class Package {
             $xmlElement = false;
 
             while ($node->parentNode) {
+                /** @var DOMElement $node */
                 $node = $node->parentNode;
                 if ("XMLElement" === $node->nodeName) {
                     $xmlElement = $node;
@@ -962,7 +1015,7 @@ class Package {
             }
 
             if ($xmlElement === false) {
-                $xmlElements = $xpath->query("//XMLElement[@XMLContent='$self']");
+                $xmlElements = $xpath->query("//XMLElement[@XMLContent='".$self."']");
                 if ($xmlElements->length > 0) {
                     $xmlElement = $xmlElements->item(0);
                 }
@@ -977,6 +1030,6 @@ class Package {
             return urldecode($tag);
         }
 
-        throw new Error("Unable to find markup tag for given {$node->nodeName} node.");
+        throw new Error(sprintf("Unable to find markup tag for given {%s} node.", $node->nodeName));
     }
 }
