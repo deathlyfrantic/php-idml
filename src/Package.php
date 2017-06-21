@@ -159,16 +159,15 @@ class Package {
      * load it from that.
      * The project I developed this for uses IDML packages that live in an unzipped form
      * so they can be easily-modified before zipping up for processing.
-     * @return $this
+     *
+     * @param string $val
      */
-    public function __construct($val = "") {
-        if (mb_strpos($val, ".idml") !== false && file_exists($val)) {
+    public function __construct($val) {
+        if (preg_match("#.idml$#i", $val) !== false && file_exists($val)) {
             $this->setZip($val)->load();
         } else if (is_dir($val)) {
             $this->setDirectory($val)->load();
         }
-
-        return $this;
     }
 
     /**
@@ -180,7 +179,7 @@ class Package {
             $pathObjects = $this->getDirectoryContents($this->getDirectory());
 
             $contents = array_map(
-                function ($pathObject) {
+                function (SplFileInfo $pathObject) {
                     return $pathObject->getRealPath();
                 },
                 array_reverse($pathObjects)
@@ -217,17 +216,22 @@ class Package {
     }
 
     /**
-     * Get either a single master spread or an array of master spreads.
-     * @param string $which [optional]
-     * The self id of the master spread you wish to return.
-     * @return DOMElement|DOMElement[]  Without $which parameter, returns an array of all master spreads.
-     * With $which parameter, returns a single DOMDocument of the specified master spread.
+     * Get a single master spread.
+     * @param $key
+     * @return DOMElement|null
      */
-    public function getMasterSpreads($which = null) {
-        if ($which !== null && array_key_exists($which, $this->masterSpreads)) {
-            return $this->masterSpreads[$which];
+    public function getMasterSpread($key) {
+        if (array_key_exists($key, $this->masterSpreads)) {
+            return $this->masterSpreads[$key];
         }
 
+        return null;
+    }
+
+    /**
+     * @return DOMElement[]
+     */
+    public function getMasterSpreads() {
         return $this->masterSpreads;
     }
 
@@ -314,17 +318,21 @@ class Package {
     }
 
     /**
-     * Get either a single spread or an array of spreads.
-     * @param string $which [optional]
-     * The self id of the spread you wish to return.
-     * @return [mixed] Without $which parameter, returns an array of all spreads.
-     * With $which parameter, returns a single DOMDocument of the specified spread.
+     * @param $key
+     * @return DOMElement|null
      */
-    public function getSpreads($which = null) {
-        if ($which !== null && array_key_exists($which, $this->spreads)) {
-            return $this->spreads[$which];
+    public function getSpread($key) {
+        if (array_key_exists($key, $this->spreads)) {
+            return $this->spreads[$key];
         }
 
+        return null;
+    }
+
+    /**
+     * @return DOMElement[]
+     */
+    public function getSpreads() {
         return $this->spreads;
     }
 
@@ -339,16 +347,21 @@ class Package {
     }
 
     /**
-     * Get either a single story or an array of stories.
-     * @param string $which [optional] The self id of the story you wish to return.
-     * @return DOMElement|DOMElement[] Without $which parameter, returns an array of all stories.
-     * With $which parameter, returns a single DOMDocument of the specified story.
+     * @param $key
+     * @return DOMElement|null
      */
-    public function getStories($which = null) {
-        if ($which !== null && array_key_exists($which, $this->stories)) {
-            return $this->stories[$which];
+    public function getStorie($key) {
+        if (array_key_exists($key, $this->stories)) {
+            return $this->stories[$key];
         }
 
+        return null;
+    }
+
+    /**
+     * @return DOMElement[]
+     */
+    public function getStories() {
         return $this->stories;
     }
 
@@ -427,6 +440,7 @@ class Package {
     /**
      * Set the directory for this IDML package. Basically if you have /directory/idmlfile.idml
      * and unzipped it, you'd setDirectory("/directory/").
+     * @param string $val
      * @return $this
      */
     public function setDirectory($val) {
@@ -461,7 +475,7 @@ class Package {
     public function setZip($val) {
         $this->zip = realpath($val);
 
-        if (empty($this->getDirectory()) && $this->getDirectory() !== 0) {
+        if (!$this->getDirectory()) {
             // gotta love empty() and PHP's automatic type-conversion :/
             $directoryName = dirname($val) . DIRECTORY_SEPARATOR . "." . basename($val);
             mkdir($directoryName, 0775);
@@ -612,7 +626,7 @@ class Package {
         chdir($this->getDirectory());
 
         if ($name == "") {
-            if (!empty($this->getZip())) {
+            if ($this->getZip()) {
                 $name = basename($this->getZip());
             } else {
                 $name = basename($this->getDirectory()) . ".idml";
@@ -680,6 +694,7 @@ class Package {
     /**
      * Add a spread to the spreads property of this package.
      * Does NOT do anything other than this - no file creation/saving/etc.
+     * @param DOMDocument $val
      * @return $this
      */
     public function addSpread(DOMDocument $val) {
@@ -689,16 +704,16 @@ class Package {
 
     /**
      * Adds an element to the spread of this IDML package.
-     * See the notes on the getSpread() method - you'll have to adjust this if your IDML
+     * See the notes on the getFirstSpread() method - you'll have to adjust this if your IDML
      * files have more than one spread.
      * @param DOMNode $val The element to be added to the spread.
      * @param DOMDocument $spread The spread you want to which you want to add the element. If not provided, defaults
-     * to whatever getSpread() returns.
+     * to whatever getFirstSpread() returns.
      * @return $this
      */
     public function addElementToSpread(DOMNode $val, DOMDocument $spread = null) {
         if (!$spread) {
-            $spread = $this->getSpread();
+            $spread = $this->getFirstSpread();
         }
 
         $spreadNodelist = $spread->getElementsByTagName("Spread");
@@ -710,6 +725,7 @@ class Package {
     /**
      * Add a master spread to the master spreads property of this package.
      * Does NOT do anything other than this - no file creation/saving/etc.
+     * @param DOMDocument $val
      * @return $this
      */
     public function addMasterSpread(DOMDocument $val) {
@@ -723,7 +739,7 @@ class Package {
      * in a thousand different places. Don't use if your IDML files have multiple spreads.
      * @return DOMDocument The spread.
      */
-    public function getSpread() {
+    public function getFirstSpread() {
         return array_values($this->getSpreads())[0];
     }
 
@@ -742,7 +758,9 @@ class Package {
 
         if ($selfsOnly) {
             $names = array_map(
-                array($this, 'getSelfAttributeFromLayer'),
+                function (DOMElement $layer) {
+                    return $layer->getAttribute("Self");
+                },
                 (array) $layers
             );
 
@@ -751,14 +769,6 @@ class Package {
         }
 
         return $layers;
-    }
-
-    /**
-     * @var $layer DOMElement
-     * @return string
-     */
-    protected function getSelfAttributeFromLayer($layer) {
-        return $layer->getAttribute("Self");
     }
 
     /**
@@ -794,7 +804,7 @@ class Package {
      * @return bool True means it was created from a zip. False means it was created from a directory.
      */
     protected function isZip() {
-        return (!empty($this->getZip()) && basename($this->getDirectory())[0] === ".");
+        return ($this->getZip() && basename($this->getDirectory())[0] === ".");
     }
 
     /**
@@ -856,7 +866,7 @@ class Package {
         $type = "Applied{$nodeType}Style";
         $style = $node->getAttribute($type);
 
-        if (empty($style)) {
+        if (!$style) {
             throw new Error("Unable to find style node for given {$node->nodeName}.");
         }
 
@@ -884,7 +894,7 @@ class Package {
         // order of elements here is intentional
         foreach ([$node, $appliedCSR, $parent, $appliedPSR] as $element) {
             $ret = $element->getAttribute($attr);
-            if (!empty($ret)) {
+            if ($ret) {
                 return $ret;
             }
         }
@@ -958,7 +968,7 @@ class Package {
                 }
             }
 
-            if ($xmlElement && !empty($xmlElement->getAttribute("MarkupTag"))) {
+            if ($xmlElement && $xmlElement->getAttribute("MarkupTag")) {
                 $tag = str_replace("XMLTag/", "", $xmlElement->getAttribute("MarkupTag"));
             }
         }
