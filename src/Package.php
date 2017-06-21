@@ -641,10 +641,10 @@ class Package {
 
     /**
      * Saves all of the individual documents in the IDML package to their documentURI locations.
-     * @param null|string $zip_filepath
+     * @param null|string $zip_file_path
      * @return $this
      */
-    public function saveAll($zip_filepath = null) {
+    public function saveAll($zip_file_path = null) {
         $this->saveDesignMap()
             ->saveStories()
             ->saveMasterSpreads()
@@ -661,9 +661,9 @@ class Package {
             }
         }
 
-        $zip_filepath = $zip_filepath ? $zip_filepath : ($this->isZip() ? $this->getZip() : null);
-        if ($zip_filepath) {
-            $this->zipPackage($zip_filepath);
+        $zip_file_path = $zip_file_path ? $zip_file_path : ($this->isZip() ? $this->getZip() : null);
+        if ($zip_file_path) {
+            $this->zipPackage($zip_file_path);
         }
 
         return $this;
@@ -671,24 +671,24 @@ class Package {
 
     /**
      * Zip this package into an IDML file from its component parts.
-     * @param string|null $zip_filepath [optional] If supplied, this is the filename of the zipped package. If not supplied,
+     * @param string|null $zip_file_path [optional] If supplied, this is the filename of the zipped package. If not supplied,
      * this defaults to the name of the directory of this IDML package with a ".idml" extension.
      * @return $this
      */
-    public function zipPackage($zip_filepath = null) {
+    public function zipPackage($zip_file_path = null) {
         $currentDirectory = getcwd();
         chdir($this->getDirectory());
 
-        if (!$zip_filepath) {
+        if (!$zip_file_path) {
             if ($this->isZip()) {
-                $zip_filepath = basename($this->getZip());
+                $zip_file_path = basename($this->getZip());
             } else {
-                $zip_filepath = basename($this->getDirectory()) . self::IDML_FILENAME_EXTENSION;
+                $zip_file_path = basename($this->getDirectory()) . self::IDML_FILENAME_EXTENSION;
             }
         }
 
         $zip = new ZipArchive();
-        $zip->open($zip_filepath, ZipArchive::CREATE);
+        $zip->open($zip_file_path, ZipArchive::CREATE);
         $dir = new SplFileInfo(".");
 
         // this is included here to make this class standalone, but ideally
@@ -715,7 +715,7 @@ class Package {
         }
 
         $zip->close();
-        $this->setZip($zip_filepath);
+        $this->setZip($zip_file_path);
         chdir($currentDirectory);
         return $this;
     }

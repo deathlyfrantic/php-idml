@@ -66,7 +66,7 @@ effort into trying to make this a generically useful class.
   element from `$node` up and returns the first tag it finds. This logic may not exactly jibe with how tags are intended
   to work in IDML; it does what I need it to do for my project but may not work for you. The tag it returns is
   `urldecode()`ed.
-- `saveAll($zip_filepath)`: Save all the files in the IDML. There are individual save methods for saving various pieces but why
+- `saveAll($zip_file_path)`: Save all the files in the IDML. There are individual save methods for saving various pieces but why
   bother? Just use this one.
 
 Everything else you'll just have to figure out on your own.
