@@ -915,7 +915,7 @@ class Package {
     public function getAppliedStyle(DOMElement $node) {
         $xpath = new DOMXPath($this->getStyles());
         $nodeType = str_replace("StyleRange", "", $node->nodeName);
-        $type = "Applied{".$nodeType."}Style";
+        $type = "Applied{$nodeType}Style";
         $style = $node->getAttribute($type);
 
         if (!$style) {
