@@ -1,3 +1,5 @@
+![PRs welcome but not actively maintained](https://img.shields.io/badge/status-PRs%20welcome%20but%20not%20actively%20maintained-red.svg?style=flat-square)
+
 ## php-idml
 
 A simple class to handle file management of Adobe InDesign IDML files. Keeping track of all the individual files within
@@ -5,7 +7,7 @@ an `.idml` package is a chore. This helps a bit. (A *bit*.)
 
 ### Installation
 
-    composer require prometee/php-idml    
+    composer require prometee/php-idml
 
 #### Usage
 
