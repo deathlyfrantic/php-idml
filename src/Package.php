@@ -146,7 +146,7 @@ class Package {
      * @return array An array of the full paths of those contents.
      */
     // this is included here to make this class standalone but ideally you'd factor it out
-    // see my gist of recursive utils @ https://gist.github.com/zandrmartin/086bba7b2a25ec8e57cc
+    // see my gist of recursive utils @ https://gist.github.com/deathlyfrantic/086bba7b2a25ec8e57cc
     public function getDirectoryContents($path) {
         $results = [];
 
